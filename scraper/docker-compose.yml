@@ -1,0 +1,56 @@
+services:
+  scraper:
+    image: ewr.vultrcr.com/uofthackswavelength/scraper:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: scraper-api
+    ports:
+      - "5000:5000"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - PORT=5000
+      - FLASK_ENV=production
+      # API Keys - set these in your environment or .env file
+      - FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - EXA_API_KEY=${EXA_API_KEY}
+      # LinkedIn credentials (optional)
+      - LINKEDIN_EMAIL=${LINKEDIN_EMAIL}
+      - LINKEDIN_PASSWORD=${LINKEDIN_PASSWORD}
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      # Persist LinkedIn session
+      - linkedin_session:/app/linkedin_session
+    networks:
+      - scraper-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: scraper-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - scraper-network
+
+networks:
+  scraper-network:
+    driver: bridge
+
+volumes:
+  redis_data:
+  linkedin_session:
