@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# Environment variables
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Flask
+instance/
+.webassets-cache
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+scraper/Evan Yu Resume.pdf
+scraper/resume (1).pdf
+
+linkedin_session.json
+exa_session.json
+sessions
+
