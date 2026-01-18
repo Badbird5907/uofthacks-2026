@@ -22,28 +22,13 @@ services:
 
   # Next.js application
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ewr.vultrcr.com/uofthackswavelength/uofthacks-web:latest
     container_name: uofthacks-web
     restart: unless-stopped
     ports:
       - "3000:3000"
-    environment:
-      # Database connection
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/uofthacks
-      
-      # Set to production
-      NODE_ENV: production
-      
-      # Add your other environment variables here
-      # AUTH_SECRET: your_secret_here
-      # NEXTAUTH_URL: http://localhost:3000
-      # AWS_ACCESS_KEY_ID: your_key
-      # AWS_SECRET_ACCESS_KEY: your_secret
-      # AWS_REGION: us-east-1
-      # AWS_S3_BUCKET: your_bucket
-      # GOOGLE_GENERATIVE_AI_API_KEY: your_key
+    env_file:
+      - .env
     depends_on:
       postgres:
         condition: service_healthy

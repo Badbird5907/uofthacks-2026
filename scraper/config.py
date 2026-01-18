@@ -29,7 +29,3 @@ exa_client = Exa(api_key=exa_api_key)
 # Model to use for Gemini
 GEMINI_MODEL = "gemini-3-flash-preview"
 
-# Exa Twitter/X endpoints
-EXA_REASON_ENDPOINT = "https://exa.ai/search/api/reason-v2"
-EXA_AUTH_URL = "https://auth.exa.ai/?callbackUrl=https%3A%2F%2Fdashboard.exa.ai%2F"
-EXA_XWRAPPED_URL = "https://exa.ai/search/xwrapped"

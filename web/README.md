@@ -1,6 +1,13 @@
-# Create T3 App
+# UofTHacks 2026 - AI-Powered Recruitment Platform
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+This is a [T3 Stack](https://create.t3.gg/) project with integrated AI profile processing capabilities.
+
+## Features
+
+- **Candidate Onboarding**: Resume upload with AI parsing
+- **Job Matching**: AI-powered job recommendations
+- **Profile Enrichment**: Deep profile analysis using external APIs and AI
+- **Video Interviews**: AI-assisted interview platform
 
 ## What's next? How do I make an app with this?
 

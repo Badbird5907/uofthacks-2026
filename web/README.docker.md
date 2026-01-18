@@ -36,9 +36,21 @@ docker-compose down
 
 ### Environment Variables
 
-1. Create a `.env.docker` file based on `.env.docker.example`
-2. Fill in all required environment variables
-3. Update `docker-compose.yml` to use your environment file or set variables directly
+**IMPORTANT:** Before running docker-compose, you must set up your environment variables:
+
+1. Copy the environment template:
+   ```bash
+   cp env.template .env
+   ```
+
+2. Edit `.env` and fill in all required values:
+   - `BETTER_AUTH_SECRET`: Generate with `openssl rand -base64 32`
+   - `BETTER_AUTH_GOOGLE_CLIENT_ID` & `BETTER_AUTH_GOOGLE_CLIENT_SECRET`: From Google Cloud Console
+   - `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET`, `NEXT_PUBLIC_S3_HOST`: Your AWS S3 credentials
+   - `GOOGLE_GENERATIVE_AI_API_KEY`: From Google AI Studio
+   - Microservice URLs: Update if needed (defaults should work if all services are in docker-compose)
+
+3. The `.env` file is automatically loaded by docker-compose
 
 ### Database Connection
 
@@ -91,6 +103,14 @@ pnpm db:migrate
 - Check logs: `docker-compose logs web`
 - Verify environment variables are set
 - Ensure database is healthy: `docker-compose ps`
+
+### Environment variables not registered
+If you get errors about missing environment variables:
+1. Make sure you created the `.env` file: `cp env.template .env`
+2. Fill in ALL required variables in the `.env` file
+3. Restart the containers: `docker-compose down && docker-compose up -d`
+4. Verify the .env file is in the same directory as docker-compose.yml
+5. Check that variables are loaded: `docker-compose config` (shows resolved config)
 
 ### Database connection failed
 - Wait for database health check to pass
