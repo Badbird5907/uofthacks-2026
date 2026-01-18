@@ -102,9 +102,9 @@ PERSON'S PROFILE:
 {json.dumps(schema, indent=2)}
 
 ALL GATHERED CONTENT:
-{all_content[:15000]}
+{all_content[:1500000]}
 
-Write a comprehensive, engaging narrative (4-6 paragraphs) that paints a vivid picture of WHO this person is. Focus heavily on NON-TECHNICAL and PERSONAL aspects:
+Write a comprehensive, engaging narrative (1-2 paragraphs) that paints a vivid picture of WHO this person is. Focus heavily on NON-TECHNICAL and PERSONAL aspects. Point out flaws in their profile and character, and areas where they can improve. Everyone has flaws, so don't be afraid to point them out.
 
 REQUIRED COVERAGE:
 1. PERSONALITY & CHARACTER: What kind of person are they? How do they come across? Are they humorous, serious, curious, adventurous? What's their vibe?
@@ -122,21 +122,20 @@ REQUIRED COVERAGE:
 7. OVERALL IMPRESSION: If you met this person at a party, what would you remember about them? What makes them memorable as a HUMAN BEING?
 
 WRITING STYLE:
-- Write as if introducing someone to a friend, not as a formal HR document
-- Be specific and vivid - use details and examples
+- Be specific and vivid - use details and examples while being concise and to the point.
 - Capture what makes this person unique and interesting
 - Balance professional context with personal depth
 - Make it feel like a real person, not a resume summary
 
-This should help someone understand the COMPLETE person - someone they might want to grab coffee with, not just hire.
-Return only the description text, no JSON."""
+This should help someone understand the COMPLETE person - someone they might want to grab coffee with, not just hire. Make it engaging and interesting to read, similar to a good reference letter.
+Return only the text formatted in markdown."""
 
     try:
         response = gemini_client.models.generate_content(
             model=GEMINI_MODEL,
             contents=prompt
         )
-        return response.text
+        return response.text.strip()
     except Exception as e:
         print(f"Error generating extra description: {e}")
         return ""

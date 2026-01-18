@@ -66,3 +66,5 @@ drizzle
 README.md
 .biome.jsonc
 biome.jsonc
+
+pnpm-lock.yaml
