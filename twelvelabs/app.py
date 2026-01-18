@@ -7,6 +7,7 @@ from flask_cors import CORS
 from twelvelabs import TwelveLabs
 from twelvelabs.types import ResponseFormat
 import requests
+import hashlib
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -125,7 +126,25 @@ def upload():
         print(f"Error parsing input data: {e}")
         return jsonify({"error": f"Invalid input data: {e}"}), 400
     video_url = data.get('video_url') if data else None
+    sha1_hash = hashlib.sha1(video_url.encode('utf-8')).hexdigest()
     print("Data received:", data)
+    
+    # Create cache directory if it doesn't exist
+    cache_dir = "cache"
+    os.makedirs(cache_dir, exist_ok=True)
+    cache_file = os.path.join(cache_dir, f"{sha1_hash}.json")
+    
+    # Check if cached result exists
+    if os.path.exists(cache_file):
+        print(f"Cache hit! Loading from {cache_file}")
+        try:
+            with open(cache_file, 'r') as f:
+                cached_data = json.load(f)
+            return jsonify(cached_data), 200
+        except Exception as e:
+            print(f"Error reading cache file: {e}")
+            # If cache is corrupted, continue with normal flow
+    
     try:
 
         if video_url:
@@ -146,7 +165,16 @@ def upload():
                 payload = {"index_id": index_id}
                 response = requests.post(url, data=payload, files=files, headers=headers)
 
-        return analyze_video(response.json()['video_id'])
+        result = analyze_video(response.json()['video_id'])
+        
+        # Cache the result if successful
+        if result[1] == 200:  # Check if status code is 200
+            result_data = result[0].get_json()
+            with open(cache_file, 'w') as f:
+                json.dump(result_data, f, indent=2)
+            print(f"Result cached to {cache_file}")
+        
+        return result
 
         # return analyze_video("696c0ba4684c0432bbde7e1c")
 
@@ -191,7 +219,8 @@ def analyze_video(video_id):
             "eye_contact": <number>,
             "body_language": <number>,
             "voice_tone": <number>,
-            "key_points": [<List of technical and non-technical strengths and weaknesses as strings to create a candidate identity profile.>]
+            "key_points": [<List of technical and non-technical strengths and weaknesses as strings to create a candidate identity profile.>],
+            "interview_responses": [<List of summarized candidate's responses to the interview questions in order they were asked, as strings.>]
         }"""
 
         main_schema = {
@@ -203,7 +232,8 @@ def analyze_video(video_id):
                 "eye_contact": {"type": "number"},
                 "body_language": {"type": "number"},
                 "voice_tone": {"type": "number"},
-                "key_points": {"type": "array", "items": {"type": "string"}}
+                "key_points": {"type": "array", "items": {"type": "string"}},
+                "interview_responses": {"type": "array", "items": {"type": "string"}}
             },
             "required": ["confidence", "clarity", "speech_rate", "eye_contact", "body_language", "voice_tone", "key_points"],
         }
@@ -228,12 +258,12 @@ def analyze_video(video_id):
             "required": ["keywords", "catchiness", "clarity", "speech_rate", "eye_contact", "body_language", "voice_tone", "key_points"],
         }
 
-        active_schema = test_schema
+        active_schema = main_schema
         # active_schema = main_schema
         # 6. Perform open-ended analysis
         result = client.analyze(
             video_id=video_id,
-            prompt=test_prompt,
+            prompt=prompt,
             # temperature=0.2,
             # max_tokens=1024,
             response_format=ResponseFormat(

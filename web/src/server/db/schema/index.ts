@@ -140,11 +140,15 @@ export const organizationMembersRelations = relations(
 	}),
 );
 
-export const userRelations = relations(user, ({ many }) => ({
+export const userRelations = relations(user, ({ many, one }) => ({
 	sessions: many(session),
 	accounts: many(account),
 
 	organizations: many(organizationMembers),
+	candidateProfile: one(candidateProfile, {
+		fields: [user.id],
+		references: [candidateProfile.userId],
+	}),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({

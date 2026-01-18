@@ -2,9 +2,7 @@
 
 import {
 	Building2,
-	ChevronRight,
 	Files,
-	FileText,
 	Home,
 	Settings,
 	Users,
@@ -13,11 +11,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { NavUser } from "@/components/app/nav-user";
-import {
-	Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import {
 	Sidebar,
 	SidebarContent,
@@ -29,9 +22,6 @@ import {
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
-	SidebarMenuSub,
-	SidebarMenuSubButton,
-	SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 
 interface RecruiterSidebarProps {
@@ -53,14 +43,9 @@ const navItems = [
 		icon: Home,
 	},
 	{
-		title: "Candidates",
-		url: "/r/candidates",
+		title: "Applications",
+		url: "/r/responses",
 		icon: Users,
-		items: [
-			{ title: "All Candidates", url: "/r/candidates" },
-			{ title: "Shortlisted", url: "/r/candidates/shortlisted" },
-			{ title: "Interviews", url: "/r/candidates/interviews" },
-		],
 	},
 	{
 		title: "Job Postings",
@@ -108,58 +93,20 @@ export function RecruiterSidebar({ user, org }: RecruiterSidebarProps) {
 					<SidebarGroupLabel>Navigation</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
-							{navItems.map((item) =>
-								item.items ? (
-									<Collapsible
-										key={item.title}
+							{navItems.map((item) => (
+								<SidebarMenuItem key={item.title}>
+									<SidebarMenuButton
 										asChild
-										defaultOpen={pathname.startsWith(item.url)}
-										className="group/collapsible"
+										tooltip={item.title}
+										isActive={pathname === item.url || pathname.startsWith(item.url + "/")}
 									>
-										<SidebarMenuItem>
-											<CollapsibleTrigger asChild>
-												<SidebarMenuButton
-													tooltip={item.title}
-													isActive={pathname === item.url}
-												>
-													<item.icon />
-													<span>{item.title}</span>
-													<ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-												</SidebarMenuButton>
-											</CollapsibleTrigger>
-											<CollapsibleContent>
-												<SidebarMenuSub>
-													{item.items.map((subItem) => (
-														<SidebarMenuSubItem key={subItem.title}>
-															<SidebarMenuSubButton
-																asChild
-																isActive={pathname === subItem.url}
-															>
-																<Link href={subItem.url}>
-																	<span>{subItem.title}</span>
-																</Link>
-															</SidebarMenuSubButton>
-														</SidebarMenuSubItem>
-													))}
-												</SidebarMenuSub>
-											</CollapsibleContent>
-										</SidebarMenuItem>
-									</Collapsible>
-								) : (
-									<SidebarMenuItem key={item.title}>
-										<SidebarMenuButton
-											asChild
-											tooltip={item.title}
-											isActive={pathname === item.url}
-										>
-											<Link href={item.url}>
-												<item.icon />
-												<span>{item.title}</span>
-											</Link>
-										</SidebarMenuButton>
-									</SidebarMenuItem>
-								),
-							)}
+										<Link href={item.url}>
+											<item.icon />
+											<span>{item.title}</span>
+										</Link>
+									</SidebarMenuButton>
+								</SidebarMenuItem>
+							))}
 						</SidebarMenu>
 					</SidebarGroupContent>
 				</SidebarGroup>

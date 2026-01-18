@@ -4,7 +4,25 @@ import { GeminiLiveClient } from "@/lib/gemini-live-client";
 import { MediaCapture } from "@/lib/media-capture";
 import { AudioPlayback } from "@/lib/audio-playback";
 
-export function InterviewScreen({ jobId, jobTitle, companyName, onInterviewComplete }: { jobId: string, jobTitle: string, companyName: string, onInterviewComplete: (videoBlob: Blob | null) => void }) {
+interface InterviewScreenProps {
+  jobId: string;
+  jobTitle: string;
+  companyName: string;
+  jobDescription: string;
+  interviewQuestions: string[];
+  notes?: string | null;
+  onInterviewComplete: (videoBlob: Blob | null) => void;
+}
+
+export function InterviewScreen({ 
+  jobId, 
+  jobTitle, 
+  companyName, 
+  jobDescription,
+  interviewQuestions,
+  notes,
+  onInterviewComplete 
+}: InterviewScreenProps) {
    // Connection state
    const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
    const [error, setError] = useState<string | null>(null);
@@ -89,12 +107,52 @@ export function InterviewScreen({ jobId, jobTitle, companyName, onInterviewCompl
    }, [recordedVideoUrl]);
  
  
+   // Build the system instruction for the AI interviewer
+   const buildSystemInstruction = () => {
+     const questionsFormatted = interviewQuestions
+       .map((q, i) => `${i + 1}. ${q}`)
+       .join('\n');
+
+     return `You are an AI interviewer conducting a job interview for the position of "${jobTitle}" at ${companyName}.
+
+## Your Role
+You are a professional, friendly, and engaging interviewer. Your goal is to assess the candidate's suitability for this role by asking the provided interview questions and having a natural conversation.
+Try to keep your responses concise and to the point. Save some time.
+
+## Job Description
+${jobDescription}
+
+${notes ? `## Additional Notes from the Hiring Team\n${notes}\n` : ''}
+## Interview Questions to Ask
+These are the specific questions you MUST ask during this interview. Stay focused on these questions, but feel free to ask brief follow-up questions to clarify or dig deeper into the candidate's responses:
+
+${questionsFormatted}
+
+## Interview Guidelines
+1. Start by introducing yourself briefly and welcoming the candidate
+2. Ask each of the provided questions naturally throughout the conversation
+3. Listen actively and ask relevant follow-up questions when appropriate
+4. Keep the conversation professional but warm and encouraging
+5. Stay focused on the provided questions - do not go off on tangents or ask unrelated questions
+6. When all questions have been covered, thank the candidate and let them know the interview is complete
+7. Keep your responses concise - this is a real-time conversation
+8. If the candidate asks about salary, benefits, or specific company policies, politely let them know those details will be discussed in later stages
+
+Remember: Your primary goal is to gather information about the candidate through the specific questions provided. Stay on topic and guide the conversation back to the interview questions if it strays too far.`;
+   };
+
    const startCall = async () => {
      setError(null);
  
      try {
+       // Build the system instruction with interview context
+       const systemInstruction = buildSystemInstruction();
+
        // Initialize Gemini client (will fetch config from server API)
-       const client = new GeminiLiveClient({ model: "gemini-2.5-flash-native-audio-preview-12-2025" });
+       const client = new GeminiLiveClient({ 
+         model: "gemini-2.5-flash-native-audio-preview-12-2025",
+         systemInstruction 
+       });
        clientRef.current = client;
  
        // Set up event listeners
@@ -103,7 +161,7 @@ export function InterviewScreen({ jobId, jobTitle, companyName, onInterviewCompl
        });
  
        client.on('log', (entry: unknown) => {
-        console.log("[LOG]", entry);
+        // console.log("[LOG]", entry);
        });
  
        client.on('audioData', (data: unknown) => {
@@ -247,8 +305,9 @@ export function InterviewScreen({ jobId, jobTitle, companyName, onInterviewCompl
        await mediaCapture.startCapture();
        setIsStreaming(true);
        
-       console.log("[INFO] Call started - speak or show something to the camera!");
-       client.sendText("Hello, I'm starting the interview. Please respond naturally and conversationally.")
+       console.log("[INFO] Call started - interview beginning!");
+       // Signal to the AI to begin the interview
+       client.sendText("The candidate has joined the interview. Please begin by introducing yourself and starting the interview.")
  
      } catch (err) {
        const message = err instanceof Error ? err.message : 'Failed to start call';

@@ -261,11 +261,12 @@ export const jobPostingRouter = createTRPCRouter({
 			const timestamp = Date.now();
 			const key = `interviews/${input.jobId}/${ctx.session.user.id}/${timestamp}.webm`;
 
-			const command = new PutObjectCommand({
-				Bucket: S3_BUCKET,
-				Key: key,
-				ContentType: input.contentType,
-			});
+		const command = new PutObjectCommand({
+			Bucket: S3_BUCKET,
+			Key: key,
+			ContentType: input.contentType,
+			ACL: "public-read",
+		});
 
 			const uploadUrl = await getSignedUrl(s3Client, command, {
 				expiresIn: 600, // 10 minutes for larger video files

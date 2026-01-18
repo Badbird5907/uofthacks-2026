@@ -104,7 +104,7 @@ export class AudioPlayback {
       const pcm16 = new Int16Array(bytes.buffer);
       const float32 = new Float32Array(pcm16.length);
       for (let i = 0; i < pcm16.length; i++) {
-        float32[i] = pcm16[i] / 32768;
+        float32[i] = (pcm16[i] ?? 0) / 32768;
       }
 
       // Add to queue

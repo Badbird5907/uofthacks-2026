@@ -1,6 +1,7 @@
 import { onboardingRouter } from "@/server/api/routers/onboarding";
 import { organizationRouter } from "@/server/api/routers/organization";
 import { jobPostingRouter } from "@/server/api/routers/jobPosting";
+import { applicantResponseRouter } from "@/server/api/routers/applicantResponse";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import { statsRouter } from "./routers/stats";
 
@@ -13,6 +14,7 @@ export const appRouter = createTRPCRouter({
 	onboarding: onboardingRouter,
 	organization: organizationRouter,
 	jobPosting: jobPostingRouter,
+	applicantResponse: applicantResponseRouter,
 	stats: statsRouter,
 });
 

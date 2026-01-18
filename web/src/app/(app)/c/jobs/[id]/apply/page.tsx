@@ -140,6 +140,8 @@ export default function ApplyPage({
 					jobTitle={job.title} 
 					companyName={job.organization?.name}
 					onInterviewComplete={handleInterviewComplete}
+					jobDescription={job.description}
+					interviewQuestions={job.interviewQuestions}
 				/>
 			</div>
 		);

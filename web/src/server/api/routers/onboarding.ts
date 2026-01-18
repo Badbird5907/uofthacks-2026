@@ -136,11 +136,12 @@ export const onboardingRouter = createTRPCRouter({
 			const sanitizedFilename = input.filename.replace(/[^a-zA-Z0-9.-]/g, "_");
 			const key = `resumes/${ctx.session.user.id}/${timestamp}-${sanitizedFilename}`;
 
-			const command = new PutObjectCommand({
-				Bucket: S3_BUCKET,
-				Key: key,
-				ContentType: input.contentType,
-			});
+		const command = new PutObjectCommand({
+			Bucket: S3_BUCKET,
+			Key: key,
+			ContentType: input.contentType,
+			ACL: "public-read",
+		});
 
 			const uploadUrl = await getSignedUrl(s3Client, command, {
 				expiresIn: 300, // 5 minutes
