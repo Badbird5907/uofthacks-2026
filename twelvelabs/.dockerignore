@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# Environment variables (IMPORTANT: don't include .env in Docker image)
+.env
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large files that might be in uploads (they'll be handled separately)
+uploads/*.mp4
+uploads/*.mov
+uploads/*.avi
+
+# Documentation
+README.md
+src/README.md
