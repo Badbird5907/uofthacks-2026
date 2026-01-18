@@ -1,9 +1,8 @@
 import type { FieldApi } from "@tanstack/react-form";
 import { Field, FieldError, FieldLabel, FieldDescription } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-
 interface FormFieldWrapperProps {
-	field: FieldApi<any, any, any, any>;
+	field: FieldApi<any, any, any, any, any, any, any, any, any, any, any, any, any, any, any, any, any, any, any, any, any, any, any>;
 	label: string;
 	placeholder?: string;
 	description?: string;

@@ -159,7 +159,7 @@ export class MediaCapture {
       // Remove the data URL prefix to get just the base64 data
       const base64Data = dataUrl.split(',')[1];
 
-      this.config.onVideoFrame?.(base64Data);
+      this.config.onVideoFrame?.(base64Data ?? '');
     }, frameInterval);
   }
 
@@ -172,7 +172,7 @@ export class MediaCapture {
     
     for (let i = 0; i < float32Array.length; i++) {
       // Clamp value between -1 and 1
-      const s = Math.max(-1, Math.min(1, float32Array[i]));
+      const s = Math.max(-1, Math.min(1, float32Array[i] ?? 0));
       // Convert to 16-bit integer
       view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
     }
@@ -187,7 +187,7 @@ export class MediaCapture {
     const bytes = new Uint8Array(buffer);
     let binary = '';
     for (let i = 0; i < bytes.byteLength; i++) {
-      binary += String.fromCharCode(bytes[i]);
+      binary += String.fromCharCode(bytes[i] ?? 0);
     }
     return btoa(binary);
   }
