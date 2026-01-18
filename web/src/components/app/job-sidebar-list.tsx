@@ -15,6 +15,7 @@ interface JobListItem {
 interface JobSidebarListProps {
 	jobs: JobListItem[];
 	selectedId: string;
+	basePath?: string;
 }
 
 const statusColors: Record<JobStatus, "default" | "secondary" | "outline"> = {
@@ -23,13 +24,13 @@ const statusColors: Record<JobStatus, "default" | "secondary" | "outline"> = {
 	closed: "outline",
 };
 
-export function JobSidebarList({ jobs, selectedId }: JobSidebarListProps) {
+export function JobSidebarList({ jobs, selectedId, basePath = "/r/jobs" }: JobSidebarListProps) {
 	return (
 		<div className="flex flex-col gap-1 overflow-y-auto">
 			{jobs.map((job) => (
 				<Link
 					key={job.id}
-					href={`/r/jobs/${job.id}`}
+					href={`${basePath}/${job.id}`}
 					className={cn(
 						"flex flex-col gap-1 p-3 border transition-colors",
 						job.id === selectedId

@@ -18,6 +18,7 @@ interface JobCardProps {
 	interviewQuestions?: string[];
 	createdAt?: Date;
 	updatedAt?: Date;
+	basePath?: string;
 }
 
 const statusColors: Record<JobStatus, "default" | "secondary" | "outline"> = {
@@ -79,6 +80,7 @@ export function JobCard({
 	salary,
 	interviewQuestions = [],
 	updatedAt,
+	basePath = "/r/jobs",
 }: JobCardProps) {
 	const plainDescription = stripMarkdown(description);
 	const truncatedDescription =
@@ -87,7 +89,7 @@ export function JobCard({
 			: plainDescription;
 
 	return (
-		<Link href={`/r/jobs/${id}`}>
+		<Link href={`${basePath}/${id}`}>
 			<Card className="hover:shadow-lg hover:border-foreground/20 transition-all cursor-pointer h-full flex flex-col group">
 				<CardHeader className="space-y-3">
 					<div className="flex items-start justify-between gap-3">

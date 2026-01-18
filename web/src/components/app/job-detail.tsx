@@ -24,7 +24,13 @@ interface JobDetailProps {
 		notes: string | null;
 		createdAt: Date;
 		updatedAt: Date;
+		organization?: {
+			id: string;
+			name: string;
+		};
 	};
+	showActions?: boolean;
+	actionButtons?: React.ReactNode;
 }
 
 const statusColors: Record<JobStatus, "default" | "secondary" | "outline"> = {
@@ -46,7 +52,7 @@ const jobTypeLabels: Record<JobType, string> = {
 	internship: "Internship",
 };
 
-export function JobDetail({ job }: JobDetailProps) {
+export function JobDetail({ job, showActions = true, actionButtons }: JobDetailProps) {
 	const router = useRouter();
 	const utils = api.useUtils();
 
@@ -67,28 +73,41 @@ export function JobDetail({ job }: JobDetailProps) {
 		}
 	};
 
+	const defaultActionButtons = (
+		<>
+			<Button variant="outline" size="icon-sm" asChild>
+				<Link href={`/r/jobs/${job.id}/edit`}>
+					<Edit2 />
+				</Link>
+			</Button>
+			<Button
+				variant="destructive"
+				size="icon-sm"
+				onClick={handleDelete}
+				disabled={deleteJob.isPending}
+			>
+				<Trash2 />
+			</Button>
+		</>
+	);
+
 	return (
 		<div className="space-y-6">
 			{/* Header */}
 			<div className="flex items-start justify-between gap-4">
 				<div className="space-y-1">
 					<h1 className="text-2xl font-bold">{job.title}</h1>
+					{job.organization && (
+						<p className="text-sm text-muted-foreground flex items-center gap-1">
+						 	<Briefcase className="size-3.5" />	{job.organization.name}
+						</p>
+					)}
 				</div>
-				<div className="flex items-center gap-2">
-					<Button variant="outline" size="icon-sm" asChild>
-						<Link href={`/r/jobs/${job.id}/edit`}>
-							<Edit2 />
-						</Link>
-					</Button>
-					<Button
-						variant="destructive"
-						size="icon-sm"
-						onClick={handleDelete}
-						disabled={deleteJob.isPending}
-					>
-						<Trash2 />
-					</Button>
-				</div>
+				{showActions && (
+					<div className="flex items-center gap-2">
+						{actionButtons ?? defaultActionButtons}
+					</div>
+				)}
 			</div>
 
 			<div className="p-3 bg-muted/50 border flex items-center gap-2">
@@ -122,25 +141,27 @@ export function JobDetail({ job }: JobDetailProps) {
 			</div>
 
 			{/* Interview Questions */}
-			<div className="space-y-2">
-				<h2 className="text-sm font-semibold">AI Interview Questions</h2>
+			{showActions && (
 				<div className="space-y-2">
-					{job.interviewQuestions.map((question, index) => (
-						<div
-							key={index}
-							className="p-3 bg-muted/50 border text-sm"
-						>
-							<span className="font-medium text-muted-foreground mr-2">
-								{index + 1}.
-							</span>
-							{question}
-						</div>
-					))}
+					<h2 className="text-sm font-semibold">AI Interview Questions</h2>
+					<div className="space-y-2">
+						{job.interviewQuestions.map((question, index) => (
+							<div
+								key={index}
+								className="p-3 bg-muted/50 border text-sm"
+							>
+								<span className="font-medium text-muted-foreground mr-2">
+									{index + 1}.
+								</span>
+								{question}
+							</div>
+						))}
+					</div>
 				</div>
-			</div>
+			)}
 
 			{/* Notes */}
-			{job.notes && (
+			{showActions && job.notes && (
 				<div className="space-y-2">
 					<h2 className="text-sm font-semibold">Notes for AI Interviewer</h2>
 					<div className="p-3 bg-muted/50 border text-sm whitespace-pre-wrap">

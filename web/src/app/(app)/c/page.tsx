@@ -1,6 +1,6 @@
 export default function CandidateDashboardPage() {
 	return (
-		<div className="space-y-4">
+		<div className="space-y-4 p-4">
 			<h1 className="text-2xl font-bold">Candidate Dashboard</h1>
 			<p className="text-muted-foreground">
 				Welcome to your dashboard. Here you can manage your job applications and profile.

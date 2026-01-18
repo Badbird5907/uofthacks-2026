@@ -83,6 +83,24 @@ export const jobPostingRouter = createTRPCRouter({
 			return jobs;
 		}),
 
+	listAll: protectedProcedure.query(async ({ ctx }) => {
+		// For candidates, list all active jobs from all organizations
+		const jobs = await ctx.db.query.jobPosting.findMany({
+			where: eq(jobPosting.status, "active"),
+			orderBy: (jobPosting, { desc }) => [desc(jobPosting.updatedAt)],
+			with: {
+				organization: {
+					columns: {
+						id: true,
+						name: true,
+					},
+				},
+			},
+		});
+
+		return jobs;
+	}),
+
 	getById: protectedProcedure
 		.input(z.object({ id: z.string().uuid() }))
 		.query(async ({ ctx, input }) => {
@@ -93,6 +111,35 @@ export const jobPostingRouter = createTRPCRouter({
 					eq(jobPosting.id, input.id),
 					eq(jobPosting.organizationId, organizationId),
 				),
+			});
+
+			if (!job) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Job posting not found",
+				});
+			}
+
+			return job;
+		}),
+
+	getByIdPublic: protectedProcedure
+		.input(z.object({ id: z.string().uuid() }))
+		.query(async ({ ctx, input }) => {
+			// For candidates, allow viewing any active job
+			const job = await ctx.db.query.jobPosting.findFirst({
+				where: and(
+					eq(jobPosting.id, input.id),
+					eq(jobPosting.status, "active"),
+				),
+				with: {
+					organization: {
+						columns: {
+							id: true,
+							name: true,
+						},
+					},
+				},
 			});
 
 			if (!job) {
