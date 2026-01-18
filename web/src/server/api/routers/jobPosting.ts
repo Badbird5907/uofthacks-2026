@@ -1,11 +1,16 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { TRPCError } from "@trpc/server";
 import { generateObject } from "ai";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { env } from "@/env";
+import { S3_BUCKET, s3Client } from "@/lib/s3";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import {
+	applicantResponse,
+	candidateProfile,
 	jobPosting,
 	organizationMembers,
 } from "@/server/db/schema";
@@ -245,6 +250,36 @@ export const jobPostingRouter = createTRPCRouter({
 			return { success: true };
 		}),
 
+	getInterviewUploadUrl: protectedProcedure
+		.input(
+			z.object({
+				jobId: z.string().uuid(),
+				contentType: z.string(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const timestamp = Date.now();
+			const key = `interviews/${input.jobId}/${ctx.session.user.id}/${timestamp}.webm`;
+
+			const command = new PutObjectCommand({
+				Bucket: S3_BUCKET,
+				Key: key,
+				ContentType: input.contentType,
+			});
+
+			const uploadUrl = await getSignedUrl(s3Client, command, {
+				expiresIn: 600, // 10 minutes for larger video files
+			});
+
+			const fileUrl = `https://${env.NEXT_PUBLIC_S3_HOST}/${S3_BUCKET}/${key}`;
+
+			return {
+				uploadUrl,
+				fileUrl,
+				key,
+			};
+		}),
+
 	parseContent: protectedProcedure
 		.input(
 			z.object({
@@ -355,5 +390,90 @@ Return null for any fields you cannot determine from the content.`;
 					message: "Failed to parse content with AI",
 				});
 			}
+		}),
+
+	completeInterview: protectedProcedure
+		.input(
+			z.object({
+				jobPostingId: z.string().uuid(),
+				recordingUrl: z.string().url(),
+				transcriptResponses: z.array(z.string()),//.min(1, "At least one transcript response is required"),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			// Check if the job posting exists and is active
+			const job = await ctx.db.query.jobPosting.findFirst({
+				where: and(
+					eq(jobPosting.id, input.jobPostingId),
+					eq(jobPosting.status, "active"),
+				),
+			});
+
+			if (!job) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Job posting not found or no longer accepting applications",
+				});
+			}
+
+			// Verify the user has a candidate profile
+			const profile = await ctx.db.query.candidateProfile.findFirst({
+				where: eq(candidateProfile.userId, ctx.session.user.id),
+			});
+
+			if (!profile) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "You must complete your candidate profile before applying to jobs",
+				});
+			}
+
+			// Verify transcript responses match the number of interview questions
+			// if (input.transcriptResponses.length !== job.interviewQuestions.length) {
+			// 	throw new TRPCError({
+			// 		code: "BAD_REQUEST",
+			// 		message: `Expected ${job.interviewQuestions.length} responses, but received ${input.transcriptResponses.length}`,
+			// 	});
+			// }
+
+			// Check if user has already applied to this job
+			const existingApplication = await ctx.db.query.applicantResponse.findFirst({
+				where: and(
+					eq(applicantResponse.jobPostingId, input.jobPostingId),
+					eq(applicantResponse.candidateProfileId, profile.id),
+				),
+			});
+
+			if (existingApplication) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "You have already applied to this job posting",
+				});
+			}
+
+			const now = new Date();
+
+			// Insert the applicant response
+			const [response] = await ctx.db
+				.insert(applicantResponse)
+				.values({
+					jobPostingId: input.jobPostingId,
+					candidateProfileId: profile.id,
+					recordingUrl: input.recordingUrl,
+					transcriptResponses: input.transcriptResponses,
+					status: "pending",
+					createdAt: now,
+					updatedAt: now,
+				})
+				.returning();
+
+			if (!response) {
+				throw new TRPCError({
+					code: "INTERNAL_SERVER_ERROR",
+					message: "Failed to submit interview response",
+				});
+			}
+
+			return response;
 		}),
 });

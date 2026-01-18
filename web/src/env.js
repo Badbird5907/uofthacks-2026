@@ -18,6 +18,8 @@ export const env = createEnv({
 		S3_BUCKET: z.string(),
 		GOOGLE_GENERATIVE_AI_API_KEY: z.string(),
 		DATABASE_URL: z.url(),
+		TWELVELABS_MICROSERVICE_URL: z.url(),
+		SCRAPER_MICROSERVICE_URL: z.url(),
 		NODE_ENV: z
 			.enum(["development", "test", "production"])
 			.default("development"),
@@ -49,6 +51,8 @@ export const env = createEnv({
 		S3_BUCKET: process.env.S3_BUCKET,
 		GOOGLE_GENERATIVE_AI_API_KEY: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
 		NEXT_PUBLIC_S3_HOST: process.env.NEXT_PUBLIC_S3_HOST,
+		TWELVELABS_MICROSERVICE_URL: process.env.TWELVELABS_MICROSERVICE_URL,
+		SCRAPER_MICROSERVICE_URL: process.env.SCRAPER_MICROSERVICE_URL,
 	},
 	/**
 	 * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

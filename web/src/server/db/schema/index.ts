@@ -103,6 +103,24 @@ export const jobPosting = pgTable("job_posting", {
 	updatedAt: timestamp("updated_at").notNull(),
 });
 
+export const applicantResponse = pgTable("applicant_response", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	jobPostingId: uuid("job_posting_id")
+		.references(() => jobPosting.id, { onDelete: "cascade" })
+		.notNull(),
+	candidateProfileId: uuid("candidate_profile_id")
+		.references(() => candidateProfile.id, { onDelete: "cascade" })
+		.notNull(),
+
+	recordingUrl: text("recording_url").notNull(), // URL to the interview recording
+	transcriptResponses: text("transcript_responses").array().notNull(), // Array of responses matching question order
+
+	status: text("status").notNull().default("pending"), // 'pending' | 'reviewed' | 'accepted' | 'rejected'
+
+	createdAt: timestamp("created_at").notNull(),
+	updatedAt: timestamp("updated_at").notNull(),
+});
+
 export const organizationRelations = relations(organization, ({ many }) => ({
 	members: many(organizationMembers),
 	jobPostings: many(jobPosting),
@@ -152,6 +170,7 @@ export const candidateProfileRelations = relations(
 		}),
 		jobHistory: many(jobHistory),
 		education: many(education),
+		applicantResponses: many(applicantResponse),
 	}),
 );
 
@@ -169,9 +188,24 @@ export const educationRelations = relations(education, ({ one }) => ({
 	}),
 }));
 
-export const jobPostingRelations = relations(jobPosting, ({ one }) => ({
+export const jobPostingRelations = relations(jobPosting, ({ one, many }) => ({
 	organization: one(organization, {
 		fields: [jobPosting.organizationId],
 		references: [organization.id],
 	}),
+	applicantResponses: many(applicantResponse),
 }));
+
+export const applicantResponseRelations = relations(
+	applicantResponse,
+	({ one }) => ({
+		jobPosting: one(jobPosting, {
+			fields: [applicantResponse.jobPostingId],
+			references: [jobPosting.id],
+		}),
+		candidateProfile: one(candidateProfile, {
+			fields: [applicantResponse.candidateProfileId],
+			references: [candidateProfile.id],
+		}),
+	}),
+);

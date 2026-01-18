@@ -30,9 +30,6 @@ export class AudioPlayback {
   private analyser: AnalyserNode | null = null;
   private dataArray: Uint8Array | null = null;
 
-  // For recording - captures AI audio as a MediaStream
-  private mediaStreamDestination: MediaStreamAudioDestinationNode | null = null;
-
   constructor(config: AudioPlaybackConfig = {}) {
     this.config = {
       sampleRate: 24000, // Gemini outputs 24kHz audio
@@ -54,10 +51,6 @@ export class AudioPlayback {
       this.gainNode.gain.value = this.volume;
       this.gainNode.connect(this.audioContext.destination);
 
-      // Create MediaStreamDestination for recording AI audio
-      this.mediaStreamDestination = this.audioContext.createMediaStreamDestination();
-      this.gainNode.connect(this.mediaStreamDestination);
-
       // Create analyser for visualization
       this.analyser = this.audioContext.createAnalyser();
       this.analyser.fftSize = 256;
@@ -73,13 +66,6 @@ export class AudioPlayback {
       this.config.onError?.(err);
       throw err;
     }
-  }
-
-  /**
-   * Get the MediaStream containing AI audio for recording
-   */
-  getAudioStream(): MediaStream | null {
-    return this.mediaStreamDestination?.stream ?? null;
   }
 
   /**
@@ -252,6 +238,5 @@ export class AudioPlayback {
     this.gainNode = null;
     this.analyser = null;
     this.dataArray = null;
-    this.mediaStreamDestination = null;
   }
 }
