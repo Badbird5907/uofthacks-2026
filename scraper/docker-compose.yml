@@ -6,12 +6,12 @@ services:
       dockerfile: Dockerfile
     container_name: scraper-api
     ports:
-      - "5000:5000"
+      - "6969:6969"
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=0
-      - PORT=5000
+      - PORT=6969
       - FLASK_ENV=production
       # API Keys - set these in your environment or .env file
       - FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
@@ -20,13 +20,16 @@ services:
       # LinkedIn credentials (optional)
       - LINKEDIN_EMAIL=${LINKEDIN_EMAIL}
       - LINKEDIN_PASSWORD=${LINKEDIN_PASSWORD}
+      # Session file paths (inside container)
+      - LINKEDIN_SESSION_PATH=/app/sessions/linkedin_session.json
+      - EXA_SESSION_PATH=/app/sessions/exa_session.json
     depends_on:
       redis:
         condition: service_healthy
     restart: unless-stopped
     volumes:
-      # Persist LinkedIn session
-      - linkedin_session:/app/linkedin_session
+      # Mount host sessions folder - place linkedin_session.json and exa_session.json here
+      - ${SESSIONS_PATH:-./sessions}:/app/sessions
     networks:
       - scraper-network
 
@@ -53,4 +56,3 @@ networks:
 
 volumes:
   redis_data:
-  linkedin_session:

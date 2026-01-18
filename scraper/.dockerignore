@@ -1,0 +1,63 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Test files
+test_*.py
+tests/
+
+# Documents and PDFs
+*.pdf
+
+# Local session files (will be mounted as volume)
+linkedin_session.json
+exa_session.json
+scrapers/linkedin_session.json
+sessions/
+
+# Local development
+*.log
+*.tmp
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
