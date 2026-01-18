@@ -9,7 +9,7 @@ export const metadata = {
 export default async function Page() {
   const token = await getSession();
   if (!token) {
-    redirect("/sign-in");
+    redirect("/auth/sign-in");
   }
   return <SignOutPage />;
 }

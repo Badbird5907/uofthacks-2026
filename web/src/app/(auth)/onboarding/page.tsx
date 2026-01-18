@@ -7,25 +7,35 @@ export const metadata = {
 	title: "Complete Your Profile",
 };
 
+export type OnboardingStep = 
+	| "role" 
+	| "resume-upload" 
+	| "candidate-profile"
+	| "candidate-job-history"
+	| "candidate-education"
+	| "recruiter-org-choice"
+	| "create-org"
+	| "join-org";
+
 export default async function OnboardingPage() {
 	const session = await getSession();
 
 	// If not logged in, redirect to sign-in
 	if (!session) {
-		redirect("/sign-in");
+		redirect("/auth/sign-in");
 	}
 
 	const onboardingStatus = await getOnboardingStatus(session.user);
 
-	// If onboarding is complete, redirect to home
 	if (onboardingStatus.isComplete) {
 		redirect("/");
 	}
 
-	// Determine the starting step
-	let step: "role" | "resume-upload" | "candidate-profile";
+	let step: OnboardingStep;
 	if (onboardingStatus.needsRoleSelection) {
 		step = "role";
+	} else if (onboardingStatus.needsRecruiterOrg) {
+		step = "recruiter-org-choice";
 	} else if (onboardingStatus.needsCandidateProfile) {
 		step = "resume-upload";
 	} else {

@@ -1,5 +1,8 @@
 import { onboardingRouter } from "@/server/api/routers/onboarding";
+import { organizationRouter } from "@/server/api/routers/organization";
+import { jobPostingRouter } from "@/server/api/routers/jobPosting";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
+import { statsRouter } from "./routers/stats";
 
 /**
  * This is the primary router for your server.
@@ -8,6 +11,9 @@ import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
  */
 export const appRouter = createTRPCRouter({
 	onboarding: onboardingRouter,
+	organization: organizationRouter,
+	jobPosting: jobPostingRouter,
+	stats: statsRouter,
 });
 
 // export type definition of API

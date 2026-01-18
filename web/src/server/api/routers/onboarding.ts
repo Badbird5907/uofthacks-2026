@@ -7,7 +7,7 @@ import { z } from "zod";
 import { env } from "@/env";
 import { S3_BUCKET, s3Client } from "@/lib/s3";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { candidateProfile, jobHistory } from "@/server/db/schema";
+import { candidateProfile, education, jobHistory } from "@/server/db/schema";
 
 const google = createGoogleGenerativeAI({
 	apiKey: env.GOOGLE_GENERATIVE_AI_API_KEY,
@@ -46,6 +46,24 @@ export const jobHistoryInputSchema = jobHistoryItemSchema.extend({
 export type JobHistoryItem = z.infer<typeof jobHistoryItemSchema>;
 export type JobHistoryInput = z.infer<typeof jobHistoryInputSchema>;
 
+// Schema for education item
+export const educationItemSchema = z.object({
+	institution: z.string().min(1, "Institution is required"),
+	degree: z.string().min(1, "Degree is required"),
+	fieldOfStudy: z.string().min(1, "Field of study is required"),
+	startDate: z.string().min(1, "Start date is required"),
+	endDate: z.string().nullable(),
+	description: z.string().nullable(),
+});
+
+// Schema with optional ID for existing entries
+export const educationInputSchema = educationItemSchema.extend({
+	id: z.string().optional(),
+});
+
+export type EducationItem = z.infer<typeof educationItemSchema>;
+export type EducationInput = z.infer<typeof educationInputSchema>;
+
 // Schema for AI-parsed resume data
 const resumeParseJobHistorySchema = z.object({
 	companyName: z.string().describe("Name of the company"),
@@ -56,6 +74,15 @@ const resumeParseJobHistorySchema = z.object({
 		.nullable()
 		.describe("End date (null if current position)"),
 	description: z.string().describe("Brief description of responsibilities"),
+});
+
+const resumeParseEducationSchema = z.object({
+	institution: z.string().describe("Name of the institution (university, college, etc.)"),
+	degree: z.string().describe("Degree obtained or pursuing (e.g., 'Bachelor of Science', 'Master of Arts')"),
+	fieldOfStudy: z.string().describe("Field of study or major (e.g., 'Computer Science', 'Business Administration')"),
+	startDate: z.string().describe("Start date (e.g., 'Sep 2018' or '2018')"),
+	endDate: z.string().nullable().describe("End date (null if currently attending)"),
+	description: z.string().nullable().describe("Additional details like GPA, honors, or relevant coursework"),
 });
 
 const resumeParseSchema = z.object({
@@ -81,6 +108,10 @@ const resumeParseSchema = z.object({
 		.array(resumeParseJobHistorySchema)
 		.nullable()
 		.describe("List of job history entries from the resume"),
+	education: z
+		.array(resumeParseEducationSchema)
+		.nullable()
+		.describe("List of education entries from the resume"),
 });
 
 export type ParsedResumeData = z.infer<typeof resumeParseSchema>;
@@ -175,6 +206,13 @@ export const onboardingRouter = createTRPCRouter({
   - startDate: Start date (e.g., 'Jan 2020' or '2020')
   - endDate: End date (null if current position)
   - description: Brief description of responsibilities
+- education: An array of education entries, each with:
+  - institution: Name of the institution (university, college, etc.)
+  - degree: Degree obtained or pursuing (e.g., 'Bachelor of Science', 'Master of Arts')
+  - fieldOfStudy: Field of study or major (e.g., 'Computer Science', 'Business Administration')
+  - startDate: Start date (e.g., 'Sep 2018' or '2018')
+  - endDate: End date (null if currently attending)
+  - description: Additional details like GPA, honors, or relevant coursework (can be null)
 
 Be accurate and only extract information that is clearly present in the resume. **FOR ALL URLS, MAKE SURE TO INCLUDE THE HTTPS:// OR HTTP://**.`,
 								},
@@ -200,6 +238,7 @@ Be accurate and only extract information that is clearly present in the resume. 
 						skills: null,
 						experience: null,
 						jobHistory: null,
+						education: null,
 					}
 				);
 			} catch (error) {
@@ -216,6 +255,7 @@ Be accurate and only extract information that is clearly present in the resume. 
 					skills: null,
 					experience: null,
 					jobHistory: null,
+					education: null,
 				};
 			}
 		}),
@@ -224,11 +264,12 @@ Be accurate and only extract information that is clearly present in the resume. 
 		.input(
 			candidateProfileSchema.extend({
 				jobHistory: z.array(jobHistoryItemSchema).optional(),
+				education: z.array(educationItemSchema).optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
 			const now = new Date();
-			const { jobHistory: jobHistoryInput, ...profileData } = input;
+			const { jobHistory: jobHistoryInput, education: educationInput, ...profileData } = input;
 
 			// Check if profile already exists
 			const existing = await ctx.db.query.candidateProfile.findFirst({
@@ -252,6 +293,11 @@ Be accurate and only extract information that is clearly present in the resume. 
 				await ctx.db
 					.delete(jobHistory)
 					.where(eq(jobHistory.candidateProfileId, existing.id));
+
+				// Delete existing education and replace with new
+				await ctx.db
+					.delete(education)
+					.where(eq(education.candidateProfileId, existing.id));
 			} else {
 				// Create new profile
 				const [newProfile] = await ctx.db
@@ -276,6 +322,23 @@ Be accurate and only extract information that is clearly present in the resume. 
 						startDate: job.startDate,
 						endDate: job.endDate,
 						description: job.description,
+						createdAt: now,
+						updatedAt: now,
+					})),
+				);
+			}
+
+			// Insert education entries if provided
+			if (educationInput && educationInput.length > 0) {
+				await ctx.db.insert(education).values(
+					educationInput.map((edu) => ({
+						candidateProfileId: profileId,
+						institution: edu.institution,
+						degree: edu.degree,
+						fieldOfStudy: edu.fieldOfStudy,
+						startDate: edu.startDate,
+						endDate: edu.endDate,
+						description: edu.description,
 						createdAt: now,
 						updatedAt: now,
 					})),
@@ -347,6 +410,72 @@ Be accurate and only extract information that is clearly present in the resume. 
 			}
 
 			await ctx.db.delete(jobHistory).where(eq(jobHistory.id, input.id));
+
+			return { success: true };
+		}),
+
+	getEducation: protectedProcedure.query(async ({ ctx }) => {
+		const profile = await ctx.db.query.candidateProfile.findFirst({
+			where: eq(candidateProfile.userId, ctx.session.user.id),
+		});
+
+		if (!profile) {
+			return [];
+		}
+
+		const educationList = await ctx.db.query.education.findMany({
+			where: eq(education.candidateProfileId, profile.id),
+		});
+
+		return educationList;
+	}),
+
+	addEducation: protectedProcedure
+		.input(educationItemSchema)
+		.mutation(async ({ ctx, input }) => {
+			const profile = await ctx.db.query.candidateProfile.findFirst({
+				where: eq(candidateProfile.userId, ctx.session.user.id),
+			});
+
+			if (!profile) {
+				throw new Error("Candidate profile not found");
+			}
+
+			const now = new Date();
+			const [newEducation] = await ctx.db
+				.insert(education)
+				.values({
+					candidateProfileId: profile.id,
+					...input,
+					createdAt: now,
+					updatedAt: now,
+				})
+				.returning();
+
+			return newEducation;
+		}),
+
+	deleteEducation: protectedProcedure
+		.input(z.object({ id: z.string() }))
+		.mutation(async ({ ctx, input }) => {
+			const profile = await ctx.db.query.candidateProfile.findFirst({
+				where: eq(candidateProfile.userId, ctx.session.user.id),
+			});
+
+			if (!profile) {
+				throw new Error("Candidate profile not found");
+			}
+
+			// Ensure the education entry belongs to this user's profile
+			const edu = await ctx.db.query.education.findFirst({
+				where: eq(education.id, input.id),
+			});
+
+			if (!edu || edu.candidateProfileId !== profile.id) {
+				throw new Error("Education entry not found");
+			}
+
+			await ctx.db.delete(education).where(eq(education.id, input.id));
 
 			return { success: true };
 		}),

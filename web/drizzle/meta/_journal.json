@@ -15,6 +15,13 @@
       "when": 1768695870170,
       "tag": "0001_simple_vengeance",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1768704293208,
+      "tag": "0002_burly_starfox",
+      "breakpoints": true
     }
   ]
 }

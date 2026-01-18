@@ -20,6 +20,14 @@ export const organizationMembers = pgTable("organization_members", {
 	updatedAt: timestamp("updated_at").notNull(),
 });
 
+export const organizationJoinCodes = pgTable("organization_join_codes", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	organizationId: uuid("organization_id").references(() => organization.id),
+	code: text("code").notNull(),
+	createdAt: timestamp("created_at").notNull(),
+	updatedAt: timestamp("updated_at").notNull(),
+});
+
 export const candidateProfile = pgTable("candidate_profile", {
 	// this is the info the user will provide when they sign up as a candidate
 	id: uuid("id").primaryKey().defaultRandom(),
@@ -57,8 +65,47 @@ export const jobHistory = pgTable("job_history", {
 	updatedAt: timestamp("updated_at").notNull(),
 });
 
+export const education = pgTable("education", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	candidateProfileId: uuid("candidate_profile_id")
+		.references(() => candidateProfile.id, { onDelete: "cascade" })
+		.notNull(),
+
+	institution: text("institution").notNull(),
+	degree: text("degree").notNull(),
+	fieldOfStudy: text("field_of_study").notNull(),
+	startDate: text("start_date").notNull(),
+	endDate: text("end_date"), // null if currently attending
+	description: text("description"),
+
+	createdAt: timestamp("created_at").notNull(),
+	updatedAt: timestamp("updated_at").notNull(),
+});
+
+export const jobPosting = pgTable("job_posting", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	organizationId: uuid("organization_id")
+		.references(() => organization.id, { onDelete: "cascade" })
+		.notNull(),
+
+	title: text("title").notNull(),
+	description: text("description").notNull(), // markdown content
+	location: text("location").notNull(),
+	workMode: text("work_mode").notNull(), // 'remote' | 'hybrid' | 'on-site'
+	salary: text("salary"), // optional salary range
+	type: text("type").notNull(), // 'full-time' | 'part-time' | 'contract' | 'internship'
+	status: text("status").notNull().default("draft"), // 'draft' | 'active' | 'closed'
+
+	interviewQuestions: text("interview_questions").array().notNull(), // questions for AI video interview
+	notes: text("notes"), // extra notes for AI interviewer
+
+	createdAt: timestamp("created_at").notNull(),
+	updatedAt: timestamp("updated_at").notNull(),
+});
+
 export const organizationRelations = relations(organization, ({ many }) => ({
 	members: many(organizationMembers),
+	jobPostings: many(jobPosting),
 }));
 
 export const organizationMembersRelations = relations(
@@ -104,6 +151,7 @@ export const candidateProfileRelations = relations(
 			references: [user.id],
 		}),
 		jobHistory: many(jobHistory),
+		education: many(education),
 	}),
 );
 
@@ -111,5 +159,19 @@ export const jobHistoryRelations = relations(jobHistory, ({ one }) => ({
 	candidateProfile: one(candidateProfile, {
 		fields: [jobHistory.candidateProfileId],
 		references: [candidateProfile.id],
+	}),
+}));
+
+export const educationRelations = relations(education, ({ one }) => ({
+	candidateProfile: one(candidateProfile, {
+		fields: [education.candidateProfileId],
+		references: [candidateProfile.id],
+	}),
+}));
+
+export const jobPostingRelations = relations(jobPosting, ({ one }) => ({
+	organization: one(organization, {
+		fields: [jobPosting.organizationId],
+		references: [organization.id],
 	}),
 }));

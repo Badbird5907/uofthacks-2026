@@ -1,11 +1,12 @@
 import { db } from "@/server/db";
-import { candidateProfile } from "@/server/db/schema";
+import { candidateProfile, organizationMembers } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
 
 export type OnboardingStatus = {
   isComplete: boolean;
   needsRoleSelection: boolean;
   needsCandidateProfile: boolean;
+  needsRecruiterOrg: boolean;
   isRecruiter: boolean | null;
 };
 
@@ -21,16 +22,32 @@ export async function getOnboardingStatus(user: {
       isComplete: false,
       needsRoleSelection: true,
       needsCandidateProfile: false,
+      needsRecruiterOrg: false,
       isRecruiter: null,
     };
   }
 
-  // Step 2: If recruiter, onboarding is complete
+  // Step 2: If recruiter, check if they have an organization
   if (isRecruiter === true) {
+    const membership = await db.query.organizationMembers.findFirst({
+      where: eq(organizationMembers.userId, user.id),
+    });
+
+    if (!membership) {
+      return {
+        isComplete: false,
+        needsRoleSelection: false,
+        needsCandidateProfile: false,
+        needsRecruiterOrg: true,
+        isRecruiter: true,
+      };
+    }
+
     return {
       isComplete: true,
       needsRoleSelection: false,
       needsCandidateProfile: false,
+      needsRecruiterOrg: false,
       isRecruiter: true,
     };
   }
@@ -45,6 +62,7 @@ export async function getOnboardingStatus(user: {
       isComplete: false,
       needsRoleSelection: false,
       needsCandidateProfile: true,
+      needsRecruiterOrg: false,
       isRecruiter: false,
     };
   }
@@ -53,6 +71,7 @@ export async function getOnboardingStatus(user: {
     isComplete: true,
     needsRoleSelection: false,
     needsCandidateProfile: false,
+    needsRecruiterOrg: false,
     isRecruiter: false,
   };
 }

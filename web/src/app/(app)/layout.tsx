@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   if (!session) {
-    redirect("/sign-in");
+    redirect("/auth/sign-in");
   }
 
   // Check if user has completed onboarding
@@ -14,9 +14,5 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect("/onboarding");
   }
 
-  return (
-    <div>
-      {children}
-    </div>
-  )
+  return children;
 }
